@@ -1,51 +1,47 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
-const image = document.getElementById("image");
-const realWidth = canvas.clientWidth;
-const realHeight = canvas.clientHeight;
+let image = document.getElementById("image");
+const inputElement=document.getElementById("inputElement");
+const rowInput=document.getElementById("rows");
+const colorInput=document.getElementById("ColorRes");
+const lightInput=document.getElementById("adjustLight");
+const gridColorInput=document.getElementById("gridColor");
+const gridStyleInput=document.getElementById("gridStyle");
+const createButton=document.getElementById("createButton");
+
+
+
 let width = canvas.clientWidth;
 let height = canvas.clientHeight;
 let rows;
 let columns;
 let columnWidth;
 let rowHeight;
-let palette;
+let numOfRows=80;
+let level=3;
+let quantumLevel;
+let gridColor="darkgray";
+let gridStyle="stitch";
+let extraLight=20;
 
-const COLOR_PALETTE_RETRO = [
-  [0, 0, 0], // black
-  [255, 255, 255], // white
-  [192, 192, 192], // gray
-  [255, 99, 71], // tomato red
-  [255, 0, 0], // red
-  [128, 0, 0], // dark red
-  [154, 205, 50], // yellow green
-  [0, 128, 0], // green
-  [0, 100, 0], // dark green
-  [0, 255, 255], // aqua
-  [0, 0, 255], // blue
-  [30, 144, 255], // dodger blue
-  [255, 165, 0], // orange
-  [205, 133, 63], // peru (light brown)
-  [139, 69, 19], // saddlebrown (brown)
-  [238, 130, 238], //violet
-  [148, 0, 211], // dark violet
-  [73, 0, 130], // indigo
-  [255, 255, 0], // yellow
-  [255, 222, 173], // navajowhite (sand)
-  [210, 180, 140], // tan
-];
+processImage();
 
-setUpCanvas(80);
-fitImageOnCanvas();
-setPalette(COLOR_PALETTE_RETRO);
-pixelizeImage();
-drawGrid("darkgray", "stitch");
+
+function processImage(){
+
+  setUpCanvas();
+  fitImageOnCanvas();
+  setQuantumLevel();
+  pixelizeImage();
+  drawGrid(gridColor, gridStyle);
+}
+
 
 /** sets up canvas based on the selected number of rows
  * @param {integer} numOfRows : number of rows on the grid
  *
  */
-function setUpCanvas(numOfRows) {
+function setUpCanvas() {
   rows = numOfRows;
   canvas.width = width;
   canvas.height = height;
@@ -63,6 +59,7 @@ function setUpCanvas(numOfRows) {
  * credits: https://livefiredev.com/html5-how-to-scale-image-to-fit-a-canvas-with-demos/
  */
 function fitImageOnCanvas() {
+
   // the min of the 2 ratios, depends if image is landscape or portait
   let ratio = Math.min(width / image.width, height / image.height);
 
@@ -70,14 +67,24 @@ function fitImageOnCanvas() {
   let newWidth = image.width * ratio;
   let newHeight = image.height * ratio;
 
+  /*
   // get the top left position of the image
   // in order to center the image within the canvas
   let x = width / 2 - newWidth / 2;
   let y = height / 2 - newHeight / 2;
+*/
+
+  // resize canvas
+  ctx.canvas.width=newWidth;
+  ctx.canvas.height=newHeight;
+
+  //adjust width and height for the row count
+  width=newWidth;
+  height=newHeight;
 
   // When drawing the image, we have to scale down the image
   // width and height in order to fit within the canvas
-  ctx.drawImage(image, x, y, newWidth, newHeight);
+  ctx.drawImage(image, 0,0, newWidth, newHeight);
 }
 
 /** draws a grid on the image
@@ -127,9 +134,9 @@ function pixelizeImage() {
   }
 }
 
-/** sets up the color palette */
-function setPalette(paletteChoice) {
-  palette = paletteChoice;
+function setQuantumLevel(){
+  level=9-level;
+  quantumLevel=Math.pow(2,level)-1;
 }
 
 /** sets the average color of a given tile by getting the value of 5 points
@@ -143,9 +150,9 @@ function avgTileColor(leftX, topY) {
   let alpha = 1;
 
   // leftmost X is on the first from the left quarter of the image
-  leftX = leftX + Math.floor(columnWidth * 0.25);
+  let innerleftX = leftX + Math.floor(columnWidth * 0.25);
   // topmost Y is on the first from the top quarter of the image
-  topY = topY + Math.floor(rowHeight * 0.25);
+  let innertopY = topY + Math.floor(rowHeight * 0.25);
   // rightmost X is on the last from the left quarter of the image
   let rightX = leftX + Math.floor(columnWidth * 0.75);
   //bottommost Y is on the last from the top quarter of the image
@@ -159,19 +166,19 @@ function avgTileColor(leftX, topY) {
 
   // extract pixel colors:
   // top left
-  let ImageData = ctx.getImageData(leftX + 1, topY + 1, 1, 1);
+  let ImageData = ctx.getImageData(innerleftX, innertopY, 1, 1);
   red += ImageData.data[0];
   green += ImageData.data[1];
   blue += ImageData.data[2];
   alpha += ImageData.data[3];
   // top right
-  ImageData = ctx.getImageData(rightX, topY, 1, 1);
+  ImageData = ctx.getImageData(rightX, innertopY, 1, 1);
   red += ImageData.data[0];
   green += ImageData.data[1];
   blue += ImageData.data[2];
   alpha += ImageData.data[3];
   // bottom left
-  ImageData = ctx.getImageData(leftX, bottomY, 1, 1);
+  ImageData = ctx.getImageData(innerleftX, bottomY, 1, 1);
   red += ImageData.data[0];
   green += ImageData.data[1];
   blue += ImageData.data[2];
@@ -197,13 +204,8 @@ function avgTileColor(leftX, topY) {
   if (alpha < 100) {
     ctx.fillStyle = "white";
   } else {
-    // if we choose not to have a palette, then the image is just going to be pixelized
-    if (palette === undefined || palette === null) {
-      ctx.fillStyle = `rgb(${Math.floor(red)},${Math.floor(green)},${Math.floor(
-        blue
-      )})`;
-    } else {
-      reduceColorsToPalette(red, green, blue, COLOR_PALETTE_RETRO);
+    {
+      quantizeColor(red, green, blue);
     }
   }
 
@@ -211,28 +213,49 @@ function avgTileColor(leftX, topY) {
   ctx.fillRect(leftX, topY, columnWidth, rowHeight);
 }
 
-function reduceColorsToPalette(r, g, b) {
-  let distance;
-  let closestIndex;
-  let tmpDist;
+function quantizeColor(r,g,b){
 
-  for (let i = 0; i < palette.length; i++) {
-    tmpDist = Math.pow(palette[i][0] - r, 2);
-    tmpDist += Math.pow(palette[i][1] - g, 2);
-    tmpDist += Math.pow(palette[i][2] - b, 2);
-    tmpDist = Math.sqrt(tmpDist);
+  let red= Math.floor((r)/quantumLevel);
+  red *=quantumLevel+extraLight;
 
-    if (distance === undefined || tmpDist < distance) {
-      distance = tmpDist;
-      closestIndex = i;
-    }
+  let green= Math.floor((g)/quantumLevel);
+  green*=quantumLevel+extraLight;
+
+  let blue=Math.floor((b)/quantumLevel);
+  blue *=quantumLevel+extraLight;
+
+  ctx.fillStyle = `rgb(${Math.floor(red)},${Math.floor(
+    green
+  )},${Math.floor(blue)})`;
+
+}
+
+function selectImage(e){
+  
+  let selectedFile=e.target.files[0];
+  let fileReader = new FileReader();
+  fileReader.readAsDataURL(selectedFile);
+
+  fileReader.onload=function (){
+    image.setAttribute('src',fileReader.result)
   }
 
-  let matchedR = palette[closestIndex][0];
-  let matchedG = palette[closestIndex][1];
-  let matchedB = palette[closestIndex][2];
+  image.onload=function(){
+    width=image.width;
+    height=image.height;
+    processImage();
+  }
 
-  ctx.fillStyle = `rgb(${Math.floor(matchedR)},${Math.floor(
-    matchedG
-  )},${Math.floor(matchedB)})`;
 }
+inputElement.addEventListener("change",e=>selectImage(e))
+
+
+createButton.addEventListener("click",()=>{
+  numOfRows=Number(rowInput.value);
+  level=Number(colorInput.value);
+  extraLight=Number(lightInput.value);
+  gridColor=gridColorInput.value;
+  gridStyle=gridStyleInput.value;
+  processImage();
+})
+
