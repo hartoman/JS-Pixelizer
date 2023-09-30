@@ -29,20 +29,21 @@
       >
         <img
           id="image"
-          src="./images/sea.jpg"
+          src=""
           class="img-fluid mx-auto d-block"
         />
+        <!--./images/sea.jpg-->
       </div>
 
       <div
         class="container-fluid border border-5 col-10 justify-content-center"
       >
         <div>
-          <label for="file">Upload File:</label>
+          <label for="inputElement" class="col-2">Upload File:</label>
           <input type="file" id="inputElement" />
         </div>
         <div>
-          <label for="rows">Number of rows:</label>
+          <label for="rows" class="col-2">Number of rows:</label>
           <input
             type="number"
             id="rows"
@@ -54,10 +55,8 @@
           Columns are calculated automatically based on the rows
         </div>
 
-
-
         <div>
-          <label for="ColorRes">Color:</label>
+          <label for="ColorRes" class="col-2">Color:</label>
           <!-- dropdown list that contains values-->
           <select id="ColorRes" name="ColorRes">
             <option value="3" selected="selected">Low</option>
@@ -68,7 +67,7 @@
         </div>
 
         <div>
-          <label for="adjustLight">Extra Light:</label>
+          <label for="adjustLight" class="col-2">Extra Light:</label>
           <input
             type="number"
             id="adjustLight"
@@ -82,7 +81,7 @@
 
         <div>
           <div>
-            <label for="gridColor">Grid Color:</label>
+            <label for="gridColor" class="col-2">Grid Color:</label>
             <select id="gridColor" name="gridColor">
               <option value="transparent">Transparent</option>
               <option value="black">Black</option>
@@ -91,7 +90,7 @@
           </div>
 
           <div>
-            <label for="gridStyle">Grid Style:</label>
+            <label for="gridStyle" class="col-2">Grid Style:</label>
             <select id="gridStyle" name="gridStyle">
               <option value="stitch" selected="selected">Stitch</option>
               <option value="solid">Solid</option>
@@ -120,6 +119,7 @@
       </div>
     </div>
 
+    <script src="rec.js"></script>
     <script src="index.js"></script>
   </body>
 </html>

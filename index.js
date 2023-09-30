@@ -1,90 +1,131 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
 let image = document.getElementById("image");
-const inputElement=document.getElementById("inputElement");
-const rowInput=document.getElementById("rows");
-const colorInput=document.getElementById("ColorRes");
-const lightInput=document.getElementById("adjustLight");
-const gridColorInput=document.getElementById("gridColor");
-const gridStyleInput=document.getElementById("gridStyle");
-const createButton=document.getElementById("createButton");
+const inputElement = document.getElementById("inputElement");
+const rowInput = document.getElementById("rows");
+const colorInput = document.getElementById("ColorRes");
+const lightInput = document.getElementById("adjustLight");
+const gridColorInput = document.getElementById("gridColor");
+const gridStyleInput = document.getElementById("gridStyle");
+const createButton = document.getElementById("createButton");
 
-
-
-let width = canvas.clientWidth;
-let height = canvas.clientHeight;
-let rows;
-let columns;
+// rows, columns and their dimensions
+let numOfRows;
+let numOfColumns;
 let columnWidth;
 let rowHeight;
-let numOfRows=80;
-let level=3;
+
+let level;
+let extraLight;
+let gridColor;
+let gridStyle;
+let canvasWidth = canvas.clientWidth;
+let canvasHeight = canvas.clientHeight;
+
 let quantumLevel;
-let gridColor="darkgray";
-let gridStyle="stitch";
-let extraLight=20;
 
-processImage();
+let tiles = [];
 
+// basic tile class
+class Tile {
+  red = 0;
+  green = 0;
+  blue = 0;
 
-function processImage(){
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  // sets the color values of the tile
+  setColors(r, g, b) {
+    this.red = Math.floor(r);
+    this.green = Math.floor(g);
+    this.blue = Math.floor(b);
+  }
+  // draws the tile on the canvas
+  paintSquare() {
+    let tileColor = `rgb(${this.red},${this.green},${this.blue})`;
+    ctx.fillStyle = tileColor;
+    ctx.fillRect(this.x * columnWidth, this.y * rowHeight, columnWidth, rowHeight);
+  }
+  // todo: remove at the end
+  printTile() {
+    console.log(this.x, this.y);
+  }
+}
+initialSetup();
+//processImage();
 
-  setUpCanvas();
+function processImage() {
+  // initializes variables
+  initialSetup();
+  // adjusts image on the canvas
   fitImageOnCanvas();
-  setQuantumLevel();
   pixelizeImage();
   drawGrid(gridColor, gridStyle);
 }
 
+// prepares all the necessary variables for the calculations
+function initialSetup() {
+  initParameters(); // initializes parameters (columns, rows, dimensions etc)
+  initCanvas(); // prepares canvas
+  initTilesArray(); // initializes the array of tiles
+  initQuantumLevel(); // sets the level of color quantization
 
-/** sets up canvas based on the selected number of rows
- * @param {integer} numOfRows : number of rows on the grid
- *
- */
-function setUpCanvas() {
-  rows = numOfRows;
-  canvas.width = width;
-  canvas.height = height;
-
-  // calculates the columns so that they are proportional to the rows
-  let ratio = width / height;
-  columns = Math.floor(rows * ratio);
-
-  // adjusts column width and row height
-  columnWidth = width / columns;
-  rowHeight = height / rows;
+  // sets up canvas based on the selected number of rows
+  function initCanvas() {
+    //  numOfRows = numOfRows;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    // calculates the columns so that they are proportional to the rows
+    let ratio = canvasWidth / canvasHeight;
+    numOfColumns = Math.floor(numOfRows * ratio);
+    // adjusts column width and row height
+    columnWidth = canvasWidth / numOfColumns;
+    rowHeight = canvasHeight / numOfRows;
+  }
+  // initializes the array of tiles
+  function initTilesArray() {
+    tiles = [];
+    for (let i = 0; i < numOfRows; i++) {
+      for (let j = 0; j < numOfColumns; j++) {
+        tiles.push(new Tile(j, i));
+      }
+    }
+  }
+  // sets the quantization level
+  function initQuantumLevel() {
+    level = 9 - level;
+    quantumLevel = Math.pow(2, level) - 1;
+  }
+  // initializes parameters
+  function initParameters() {
+    numOfRows = Number(rowInput.value);
+    level = Number(colorInput.value);
+    extraLight = Number(lightInput.value);
+    gridColor = gridColorInput.value;
+    gridStyle = gridStyleInput.value;
+  }
 }
 
 /** adjusts image to fit canvas
  * credits: https://livefiredev.com/html5-how-to-scale-image-to-fit-a-canvas-with-demos/
  */
 function fitImageOnCanvas() {
-
   // the min of the 2 ratios, depends if image is landscape or portait
-  let ratio = Math.min(width / image.width, height / image.height);
-
+  let ratio = Math.min(canvasWidth / image.width, canvasHeight / image.height);
   // adjust width and height
   let newWidth = image.width * ratio;
   let newHeight = image.height * ratio;
-
-  /*
-  // get the top left position of the image
-  // in order to center the image within the canvas
-  let x = width / 2 - newWidth / 2;
-  let y = height / 2 - newHeight / 2;
-*/
-
   // resize canvas
-  ctx.canvas.width=newWidth;
-  ctx.canvas.height=newHeight;
-
+  ctx.canvas.width = newWidth;
+  ctx.canvas.height = newHeight;
   //adjust width and height for the row count
-  width=newWidth;
-  height=newHeight;
-
+  canvasWidth = newWidth;
+  canvasHeight = newHeight;
   // When drawing the image, we have to scale down the image
   // width and height in order to fit within the canvas
-  ctx.drawImage(image, 0,0, newWidth, newHeight);
+  ctx.drawImage(image, 0, 0, newWidth, newHeight);
 }
 
 /** draws a grid on the image
@@ -95,15 +136,15 @@ function fitImageOnCanvas() {
 function drawGrid(gridColor, style) {
   let width = canvas.width;
   let height = canvas.height;
-  let columnWidth = width / columns;
-  let rowHeight = height / rows;
+  let columnWidth = width / numOfColumns;
+  let rowHeight = height / numOfRows;
 
-  for (let i = 0; i < rows; i++) {
+  for (let i = 0; i < numOfRows; i++) {
     ctx.moveTo(0, i * rowHeight);
     ctx.lineTo(width, i * rowHeight);
   }
 
-  for (let i = 0; i < columns; i++) {
+  for (let i = 0; i < numOfColumns; i++) {
     ctx.moveTo(i * columnWidth, 0);
     ctx.lineTo(i * columnWidth, height);
   }
@@ -127,16 +168,11 @@ function drawGrid(gridColor, style) {
  *
  */
 function pixelizeImage() {
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < columns; j++) {
+  for (let i = 0; i < numOfRows; i++) {
+    for (let j = 0; j < numOfColumns; j++) {
       avgTileColor(j * columnWidth, i * rowHeight);
     }
   }
-}
-
-function setQuantumLevel(){
-  level=9-level;
-  quantumLevel=Math.pow(2,level)-1;
 }
 
 /** sets the average color of a given tile by getting the value of 5 points
@@ -213,49 +249,40 @@ function avgTileColor(leftX, topY) {
   ctx.fillRect(leftX, topY, columnWidth, rowHeight);
 }
 
-function quantizeColor(r,g,b){
+function quantizeColor(r, g, b) {
+  let red = Math.floor(r / quantumLevel);
+  red *= quantumLevel + extraLight;
 
-  let red= Math.floor((r)/quantumLevel);
-  red *=quantumLevel+extraLight;
+  let green = Math.floor(g / quantumLevel);
+  green *= quantumLevel + extraLight;
 
-  let green= Math.floor((g)/quantumLevel);
-  green*=quantumLevel+extraLight;
+  let blue = Math.floor(b / quantumLevel);
+  blue *= quantumLevel + extraLight;
 
-  let blue=Math.floor((b)/quantumLevel);
-  blue *=quantumLevel+extraLight;
-
-  ctx.fillStyle = `rgb(${Math.floor(red)},${Math.floor(
-    green
-  )},${Math.floor(blue)})`;
-
+  ctx.fillStyle = `rgb(${Math.floor(red)},${Math.floor(green)},${Math.floor(blue)})`;
 }
 
-function selectImage(e){
-  
-  let selectedFile=e.target.files[0];
+// event Listener to upload choose and load an image
+inputElement.addEventListener("change", (e) => {
+  let selectedFile = e.target.files[0];
   let fileReader = new FileReader();
   fileReader.readAsDataURL(selectedFile);
+  // once the fileReader loads, the image source is set
+  fileReader.onload = function () {
+    image.setAttribute("src", fileReader.result);
+  };
+  // once the image loads, we get the variables
+  image.onload = function () {
+    canvasWidth = image.width;
+    canvasHeight = image.height;
+  };
+});
 
-  fileReader.onload=function (){
-    image.setAttribute('src',fileReader.result)
-  }
-
-  image.onload=function(){
-    width=image.width;
-    height=image.height;
+createButton.addEventListener("click", () => {
+  if (image.getAttribute("src") != "") {
     processImage();
+  } else {
+    alert("no image selected");
   }
-
-}
-inputElement.addEventListener("change",e=>selectImage(e))
-
-
-createButton.addEventListener("click",()=>{
-  numOfRows=Number(rowInput.value);
-  level=Number(colorInput.value);
-  extraLight=Number(lightInput.value);
-  gridColor=gridColorInput.value;
-  gridStyle=gridStyleInput.value;
-  processImage();
-})
+});
 
