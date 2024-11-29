@@ -1,30 +1,31 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d", { willReadFrequently: true });
 let image = document.getElementById("image");
-const inputElement = document.getElementById("inputElement");
+const uploadPic = document.getElementById("uploadPic");
 const rowInput = document.getElementById("rows");
 const colorInput = document.getElementById("ColorRes");
 const lightInput = document.getElementById("adjustLight");
 const gridColorInput = document.getElementById("gridColor");
 const gridStyleInput = document.getElementById("gridStyle");
 const createButton = document.getElementById("createButton");
-
+// the initial canvas dimensions
+let canvasWidth = canvas.clientWidth;
+let canvasHeight = canvas.clientHeight;
 // rows, columns and their dimensions
 let numOfRows;
 let numOfColumns;
 let columnWidth;
 let rowHeight;
-
-let level;
-let extraLight;
+let level; // user-defined variable to be used in the calc of the quantumLevel
+let quantumLevel; // the level of the color quantization (higher = more colors)
+let extraLight; // optional extra lighting
 let gridColor;
 let gridStyle;
-let canvasWidth = canvas.clientWidth;
-let canvasHeight = canvas.clientHeight;
-
-let quantumLevel;
-
+// the array of the tiles
 let tiles = [];
+
+// TODO
+let colorMap = new Map();
 
 // basic tile class
 class Tile {
@@ -53,16 +54,23 @@ class Tile {
     console.log(this.x, this.y);
   }
 }
-initialSetup();
-//processImage();
+
+
+
 
 function processImage() {
   // initializes variables
   initialSetup();
   // adjusts image on the canvas
   fitImageOnCanvas();
-  pixelizeImage();
+  // calculates the rgb values of each tile and saves them in the array
+  calcTilesRGBValues();
+  // paints all the tiles
+  paintTiles();
+  // draws the grid
   drawGrid(gridColor, gridStyle);
+  console.log(colorMap)
+
 }
 
 // prepares all the necessary variables for the calculations
@@ -164,22 +172,34 @@ function drawGrid(gridColor, style) {
   ctx.stroke();
 }
 
-/** pixelizes all tiles of the image
- *
- */
-function pixelizeImage() {
-  for (let i = 0; i < numOfRows; i++) {
-    for (let j = 0; j < numOfColumns; j++) {
-      avgTileColor(j * columnWidth, i * rowHeight);
-    }
-  }
+// calculates the rgb values of each tile and saves them in the array
+function calcTilesRGBValues() {
+  // clear the colormap from previous entries
+  colorMap.clear();
+  tiles.map((tile) => {
+    avgTileColor(tile);
+    addToColorMap(tile);
+  });
+  // sorts the map by descending color frequency
+  colorMap = new Map([...colorMap.entries()].sort((a, b) => b[1] - a[1]));
+}
+
+// paints all the tiles
+function paintTiles() {
+  tiles.map((tile) => {
+    // fills up the selected tile with the chosen color
+    ctx.fillStyle = `rgb(${tile.red},${tile.green},${tile.blue})`;
+    ctx.fillRect(tile.x * columnWidth, tile.y * rowHeight, columnWidth, rowHeight);
+  });
 }
 
 /** sets the average color of a given tile by getting the value of 5 points
  * @params:Integer tlx,Integer tly
  */
 // credits: https://www.geeksforgeeks.org/how-to-get-pixel-from-html-canvas/
-function avgTileColor(leftX, topY) {
+function avgTileColor(tile) {
+  let leftX = tile.x * columnWidth;
+  let topY = tile.y * rowHeight;
   let red = 0;
   let green = 0;
   let blue = 0;
@@ -198,7 +218,7 @@ function avgTileColor(leftX, topY) {
   let centerY = topY + rowHeight / 2;
 
   // central point is a bit more important that the rest
-  let centralFactor = 3;
+  const centralFactor = 3;
 
   // extract pixel colors:
   // top left
@@ -238,32 +258,44 @@ function avgTileColor(leftX, topY) {
   alpha /= 4 + centralFactor;
 
   if (alpha < 100) {
-    ctx.fillStyle = "white";
+    // for transparent portions of an image
+    const defaultColor = [255, 255, 255];
+    tile.setColors(...defaultColor);
   } else {
     {
-      quantizeColor(red, green, blue);
+      [red, green, blue] = quantizeColor(red, green, blue);
+      tile.setColors(red, green, blue);
     }
   }
 
-  // fills up the selected tile with the chosen color
-  ctx.fillRect(leftX, topY, columnWidth, rowHeight);
+  // quantizes the colors by the calculated level and optionally adds extra light factor
+  function quantizeColor(r, g, b) {
+    let red = Math.floor(r / quantumLevel);
+    red *= quantumLevel + extraLight;
+    let green = Math.floor(g / quantumLevel);
+    green *= quantumLevel + extraLight;
+    let blue = Math.floor(b / quantumLevel);
+    blue *= quantumLevel + extraLight;
+    // remove decimals
+    red = Math.floor(red);
+    green = Math.floor(green);
+    blue = Math.floor(blue);
+    // return rgb array
+    return [red, green, blue];
+  }
 }
 
-function quantizeColor(r, g, b) {
-  let red = Math.floor(r / quantumLevel);
-  red *= quantumLevel + extraLight;
-
-  let green = Math.floor(g / quantumLevel);
-  green *= quantumLevel + extraLight;
-
-  let blue = Math.floor(b / quantumLevel);
-  blue *= quantumLevel + extraLight;
-
-  ctx.fillStyle = `rgb(${Math.floor(red)},${Math.floor(green)},${Math.floor(blue)})`;
+function addToColorMap(tile) {
+  let colorCode = `${tile.red}-${tile.green}-${tile.blue}`;
+  if (!colorMap.has(colorCode))
+    colorMap.set(colorCode, 1);
+  else {
+    let colorCount = colorMap.get(colorCode);
+    colorMap.set(colorCode, colorCount+1);
+  }
 }
-
 // event Listener to upload choose and load an image
-inputElement.addEventListener("change", (e) => {
+uploadPic.addEventListener("change", (e) => {
   let selectedFile = e.target.files[0];
   let fileReader = new FileReader();
   fileReader.readAsDataURL(selectedFile);
@@ -275,14 +307,25 @@ inputElement.addEventListener("change", (e) => {
   image.onload = function () {
     canvasWidth = image.width;
     canvasHeight = image.height;
+        // TODO: TIDY UP
+    const params1 = document.getElementById('params1');
+    params1.style.display = "block";
+    params1.scrollIntoView({behavior: "smooth"});
   };
+
 });
 
 createButton.addEventListener("click", () => {
   if (image.getAttribute("src") != "") {
     processImage();
+    // TODO: TIDY UP
+    canvas.style.display = "block";
+    const params2 = document.getElementById('params2');
+    params2.style.display = "block";
+    const colorMapContents = document.getElementById('colorMapContents');
+    
+    params2.scrollIntoView({behavior: "smooth"});
   } else {
     alert("no image selected");
   }
 });
-

@@ -1,125 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Turns an image to embroidery" />
-    <meta
-      name="keywords"
-      content="turn, image to, pixels, pixelize, stitching, embroidery"
-    />
-    <meta name="author" content="Christos Chartomatsidis" />
-    <title>Pixelizer</title>
 
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div
-      class="container-fluid mx-10 p-2 rounded"
-      style="background-color: lightgray; height: vh"
-    >
-      <div
-        class="container-fluid border border-0 col-10"
-        style="background-color: white"
-      >
-        <img
-          id="image"
-          src=""
-          class="img-fluid mx-auto d-block"
-        />
-        <!--./images/sea.jpg-->
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Turns an image to embroidery" />
+  <meta name="keywords" content="turn, image to, pixels, pixelize, stitching, embroidery" />
+  <meta name="author" content="Christos Chartomatsidis" />
+  <title>Pixelizer</title>
 
-      <div
-        class="container-fluid border border-5 col-10 justify-content-center"
-      >
-        <div>
-          <label for="inputElement" class="col-2">Upload File:</label>
-          <input type="file" id="inputElement" />
-        </div>
-        <div>
-          <label for="rows" class="col-2">Number of rows:</label>
-          <input
-            type="number"
-            id="rows"
-            name="rows"
-            min="40"
-            max="100"
-            value="80"
-          />
-          Columns are calculated automatically based on the rows
-        </div>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
 
-        <div>
-          <label for="ColorRes" class="col-2">Color:</label>
-          <!-- dropdown list that contains values-->
-          <select id="ColorRes" name="ColorRes">
-            <option value="3" selected="selected">Low</option>
-            <option value="4">Medium</option>
-            <option value="5">High</option>
-          </select>
-          Automatically adjusts the colors for the desired quantization
-        </div>
+<body>
+  <div class="container-fluid mx-10 p-2 rounded" height: vh">
 
-        <div>
-          <label for="adjustLight" class="col-2">Extra Light:</label>
-          <input
-            type="number"
-            id="adjustLight"
-            name="adjustLight"
-            min="0"
-            max="30"
-            value="20"
-          />
-          Lightens up the image
-        </div>
-
-        <div>
-          <div>
-            <label for="gridColor" class="col-2">Grid Color:</label>
-            <select id="gridColor" name="gridColor">
-              <option value="transparent">Transparent</option>
-              <option value="black">Black</option>
-              <option value="darkgray" selected="selected">Gray</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="gridStyle" class="col-2">Grid Style:</label>
-            <select id="gridStyle" name="gridStyle">
-              <option value="stitch" selected="selected">Stitch</option>
-              <option value="solid">Solid</option>
-            </select>
-          </div>
-        </div>
-
-        <button id="createButton">Create embroidery</button>
-      </div>
-
-      <div
-        class="container-fluid border border-5 col-10"
-        style="background-color: white"
-      >
-        <canvas
-          id="canvas"
-          style="background-color: white; width: 100%; height: 100%"
-        ></canvas>
-      </div>
-
-      <div
-        class="container-l ml-5 justify-content-center"
-        style="width: 100%; display: flex"
-      >
-        <button>Download Image</button>
+    <!-- upload pic button-->
+    <div class="container-fluid border border-5 col-10 justify-content-center">
+      <div>
+        <label for="uploadPic" class="col-2">Upload File:</label>
+        <input type="file" id="uploadPic" />
       </div>
     </div>
 
-    <script src="rec.js"></script>
-    <script src="index.js"></script>
-  </body>
+    <!-- original image-->
+    <div class="container-fluid border border-0 col-10">
+      <img id="image" src="" class="img-fluid mx-auto d-block" />
+    </div>
+
+    <!--parameters container-->
+    <div class="container-fluid border border-5 col-10 justify-content-center" id="params1" style="display: none;">
+      <div>
+        <label for="rows" class="col-2">Number of rows:</label>
+        <input type="number" id="rows" name="rows" min="40" max="100" value="80" />
+        Columns are calculated automatically based on the rows
+      </div>
+
+      <div>
+        <label for="ColorRes" class="col-2">Color:</label>
+        <!-- dropdown list that contains values-->
+        <select id="ColorRes" name="ColorRes">
+          <option value="2">Very Low</option>
+          <option value="3" selected="selected">Low</option>
+          <option value="4">Medium</option>
+          <option value="5">High</option>
+        </select>
+        Automatically adjusts the colors for the desired quantization
+      </div>
+
+      <div>
+        <label for="adjustLight" class="col-2">Extra Light:</label>
+        <input type="number" id="adjustLight" name="adjustLight" min="0" max="30" value="20" />
+        Lightens up the image
+      </div>
+
+      <div>
+        <div>
+          <label for="gridColor" class="col-2">Grid Color:</label>
+          <select id="gridColor" name="gridColor">
+            <option value="transparent">Transparent</option>
+            <option value="black">Black</option>
+            <option value="darkgray" selected="selected">Gray</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="gridStyle" class="col-2">Grid Style:</label>
+          <select id="gridStyle" name="gridStyle">
+            <option value="stitch" selected="selected">Stitch</option>
+            <option value="solid">Solid</option>
+          </select>
+        </div>
+      </div>
+      <button id="createButton">Create embroidery</button>
+    </div>
+<hr>
+    <!-- canvas-->
+    <div class="container-fluid border border-0 col-10">
+      <canvas id="canvas" style="display: none;" class="mx-auto d-block"></canvas>
+    </div>
+    <hr>
+<!-- params2-->
+    <div class="container-fluid border border-5 col-10" style="display: none;" id="params2">
+      <hr>
+      <div>
+        <div >
+          <ol id="colorMapContents">
+            <li><div>
+              <label for="rows" class="col-2">Number of rows:</label>
+        <input type="number" id="rows" name="rows" min="40" max="100" value="80" />
+            </div></li>
+            <li>1</li>
+            <li>1</li>
+          </ol>
+        </div>
+      </div>
+      <div><button>Download Image</button></div>
+
+    </div>
+  </div>
+
+  <script src="rec.js"></script>
+  <script src="index.js"></script>
+</body>
+
 </html>

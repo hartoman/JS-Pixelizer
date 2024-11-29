@@ -1,9 +1,29 @@
+
+:root{
+    --background-color: lightgray ;
+}
+
+*{
+/*background-color: var(--background-color);*/
+}
+
 html,
 body{
 height: 100%;
 overflow-x:hidden;
 margin-bottom: 0px;
 padding-bottom: 0px;
-
+background-color: var(--background-color);
 }
 
+image {
+    background-color: var(--background-color);
+}
+
+canvas {
+    background-color: var(--background-color);
+}
+
+body div{
+    background-color: var(--background-color); 
+}
